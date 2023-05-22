@@ -104,22 +104,58 @@ app.put('/v3/places/:id', async (req, res) => {
     }
 });
 
-app.delete('/v3/places/:id', async (req, res) => {
+
+
+
+
+app.get('/v4/places/:id1/distanceto/:id2', async (req, res) => {
     try {
-        let id = req.params.id
+        let id = req.params.id1;
+        let id2 = req.params.id2;
         const pool = connectToDB();
-        const query = {
-            text: 'DELETE FROM places WHERE id = $1;',
+        const long1 = {
+            text: 'select longitude from places WHERE id = $1;',
             values: [id],
         };
+        const long2 = {
+            text: 'select longitude from places WHERE id = $1;',
+            values: [id2],
+        };
+        const lat1 = {
+            text: 'select latitude from places WHERE id = $1;',
+            values: [id],
+        };
+        const lat2 = {
+            text: 'select latitude from places WHERE id = $1;',
+            values: [id2],
+        };
 
-        const result = await pool.query(query);
-        res.status(200).json({ message: 'Excluido com sucesso' });
+        const lg1 = await pool.query(long1);
+        const lg2 = await pool.query(long2);
+        const lt1 = await pool.query(lat1);
+        const lt2 = await pool.query(lat2);
+
+        let l1 = lg1.rows[0].longitude;
+        let longitude1 = parseFloat(l1)
+        let l2 = lg2.rows[0].longitude;
+        let longitude2 = parseFloat(l2)
+        let l3 = lt1.rows[0].latitude;
+        let latitude1 = parseFloat(l3)
+        let l4 = lt2.rows[0].latitude;
+        let latitude2 = parseFloat(l4)
+
+        let distance = Math.sqrt((longitude1 - longitude2)**2 + (latitude1-latitude2)**2)
+
+        res.status(200).json({ message: distance });
         pool.end();
     } catch (error) {
-        console.error('Erro ao criar local:', error);
-        res.status(500).json({ message: 'Erro ao excluir local' });
+        console.error('Erro ao fazer distancia:', error);
+        res.status(500).json({ message: 'Erro ao fazer distancia' });
     }
 });
+
+
+
+
 
 export default app;
