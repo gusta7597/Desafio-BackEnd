@@ -99,12 +99,28 @@ app.put('/v3/places/:id', async (req, res) => {
         res.status(200).json({ message: 'Editado com sucesso' });
         pool.end();
     } catch (error) {
-        console.error('Erro ao criar local:', error);
+        console.error('Erro ao editar local:', error);
         res.status(500).json({ message: 'Erro ao editar local' });
     }
 });
 
 
+app.delete('/v3/places/:id', async (req, res) => {
+    try {
+        let id = req.params.id
+        const pool = connectToDB();
+        const query = {
+            text: 'DELETE FROM places WHERE id = $1;',
+            values: [id],
+        };
+        const result = await pool.query(query);
+        res.status(200).json({ message: 'removido com sucesso' });
+        pool.end();
+    } catch (error) {
+        console.error('Erro ao remover local:', error);
+        res.status(500).json({ message: 'Erro ao remover local' });
+    }
+});
 
 
 
@@ -144,7 +160,7 @@ app.get('/v4/places/:id1/distanceto/:id2', async (req, res) => {
         let l4 = lt2.rows[0].latitude;
         let latitude2 = parseFloat(l4)
 
-        let distance = Math.sqrt((longitude1 - longitude2)**2 + (latitude1-latitude2)**2)
+        let distance = Math.sqrt((longitude1 - longitude2) ** 2 + (latitude1 - latitude2) ** 2)
 
         res.status(200).json({ message: distance });
         pool.end();
@@ -155,7 +171,42 @@ app.get('/v4/places/:id1/distanceto/:id2', async (req, res) => {
 });
 
 
+app.get('/v4/search?latitude={latitude}&longitude={longitude}&radius={radius}', async (req, res) => {
+    try {
+        const { latitude, longitude, radius } = req.query;
 
+        if (!latitude || !longitude || !radius) {
+            return res.status(400).json({ error: 'Latitude, longitude e raio são obrigatórios.' });
+        }
 
+        const centralLatitude = parseFloat(latitude);
+        const centralLongitude = parseFloat(longitude);
+        const searchRadius = parseFloat(radius);
+
+        const pool = connectToDB();
+
+        const query = 'SELECT id, latitude, longitude FROM places';
+        const result = await pool.query(query);
+
+        const places = result.rows;
+
+        const placesWithDistance = places.map(place => {
+            const distance = Math.sqrt(
+                Math.pow(place.longitude - centralLongitude, 2) +
+                Math.pow(place.latitude - centralLatitude, 2)
+            );
+
+            return { ...place, distance };
+        });
+
+        const filteredPlaces = placesWithDistance.filter(place => place.distance <= searchRadius);
+
+        res.status(200).json({ places: filteredPlaces });
+        pool.end();
+    } catch (error) {
+        console.error('Erro na busca de lugares:', error);
+        res.status(500).json({ error: 'Erro na busca de lugares' });
+    }
+});
 
 export default app;
