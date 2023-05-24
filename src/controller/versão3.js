@@ -1,9 +1,9 @@
 
 import connectToDB from '../db/dbconfig.js';
 
-export async function allPlacesV3() {
-    try {
-        const pool = connectToDB();
+export async function allPlacesV3(req,res) {
+    const pool = connectToDB();
+    try { 
         const query = 'SELECT * FROM places';
         const result = await pool.query(query);
 
@@ -11,9 +11,8 @@ export async function allPlacesV3() {
     } catch (error) {
         console.error('Erro ao realizar a consulta:', error);
         res.status(500).json({ message: 'Erro ao realizar a consulta' });
-    } finally {
-        pool.end();
-    }
+    } 
+    pool.end();
 }
 
 export async function createPlacesV3(req, res) {

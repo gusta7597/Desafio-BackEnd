@@ -8,3 +8,7 @@ export function specificPlaceV2(req,res) {
     let index = searchPlace(req.params.id)
     res.json(places[index]);
 }
+
+function searchPlace(id) {
+    return places.findIndex(places => places.id == id);
+}
